@@ -1,0 +1,12 @@
+*.vcd
+*.fst
+*.log
+*.jou
+*.pb
+*.wlf
+simv*
+csrc/
+work/
+reports/*
+!reports/.gitkeep
+.DS_Store
