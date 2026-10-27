@@ -1,0 +1,7 @@
+/Users/chaitanya/Downloads/sync-fifo-formal-verification/rtl/sync_fifo.sv:56: vvp.tgt sorry: Case unique/unique0 qualities are ignored.
+PASS: FIFO scoreboard test
+Accepted writes: 276
+Accepted reads: 269
+Rejected writes: 1
+Rejected reads: 8
+/Users/chaitanya/Downloads/sync-fifo-formal-verification/simulation/fifo_tb.sv:122: $finish called at 5356000 (1ps)

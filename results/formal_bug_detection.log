@@ -1,0 +1,39 @@
+SBY 18:57:32 [fifo_bug_full] Removing directory '/Users/chaitanya/Downloads/sync-fifo-formal-verification/formal/fifo_bug_full'.
+SBY 18:57:32 [fifo_bug_full] Copy '/Users/chaitanya/Downloads/sync-fifo-formal-verification/formal/../rtl/bug_variants/fifo_bug_full.sv' to '/Users/chaitanya/Downloads/sync-fifo-formal-verification/formal/fifo_bug_full/src/fifo_bug_full.sv'.
+SBY 18:57:32 [fifo_bug_full] Copy '/Users/chaitanya/Downloads/sync-fifo-formal-verification/formal/fifo_bug_full_formal.sv' to '/Users/chaitanya/Downloads/sync-fifo-formal-verification/formal/fifo_bug_full/src/fifo_bug_full_formal.sv'.
+SBY 18:57:32 [fifo_bug_full] engine_0: smtbmc z3
+SBY 18:57:32 [fifo_bug_full] base: starting process "cd fifo_bug_full/src; yosys -ql ../model/design.log ../model/design.ys"
+SBY 18:57:32 [fifo_bug_full] base: Warning: Wire fifo_bug_full_formal.\clk is used but has no driver.
+SBY 18:57:32 [fifo_bug_full] base: finished (returncode=0)
+SBY 18:57:32 [fifo_bug_full] prep: starting process "cd fifo_bug_full/model; yosys -ql design_prep.log design_prep.ys"
+SBY 18:57:32 [fifo_bug_full] prep: Warning: Wire fifo_bug_full_formal.\clk is used but has no driver.
+SBY 18:57:32 [fifo_bug_full] prep: finished (returncode=0)
+SBY 18:57:32 [fifo_bug_full] smt2: starting process "cd fifo_bug_full/model; yosys -ql design_smt2.log design_smt2.ys"
+SBY 18:57:32 [fifo_bug_full] smt2: finished (returncode=0)
+SBY 18:57:32 [fifo_bug_full] engine_0: starting process "cd fifo_bug_full; yosys-smtbmc -s z3 --presat --noprogress -t 10  --append 0 --dump-vcd engine_0/trace.vcd --dump-yw engine_0/trace.yw --dump-vlogtb engine_0/trace_tb.v --dump-smtc engine_0/trace.smtc model/design_smt2.smt2"
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Solver: z3
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assumptions in step 0..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assertions in step 0..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assumptions in step 1..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assertions in step 1..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assumptions in step 2..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assertions in step 2..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assumptions in step 3..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assertions in step 3..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assumptions in step 4..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Checking assertions in step 4..
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  BMC failed!
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Assert failed in fifo_bug_full_formal: fifo_bug_full_formal.sv:50.13-50.46 (_witness_.check_assert_fifo_bug_full_formal_sv_50_16)
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Writing trace to VCD file: engine_0/trace.vcd
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Writing trace to Verilog testbench: engine_0/trace_tb.v
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Writing trace to constraints file: engine_0/trace.smtc
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Writing trace to Yosys witness file: engine_0/trace.yw
+SBY 18:57:32 [fifo_bug_full] engine_0: ##   0:00:00  Status: failed
+SBY 18:57:32 [fifo_bug_full] engine_0: finished (returncode=1)
+SBY 18:57:32 [fifo_bug_full] engine_0: Status returned by engine: FAIL
+SBY 18:57:32 [fifo_bug_full] summary: Elapsed clock time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 18:57:32 [fifo_bug_full] summary: Elapsed process time [H:MM:SS (secs)]: 0:00:00 (0)
+SBY 18:57:32 [fifo_bug_full] summary: engine_0 (smtbmc z3) returned FAIL
+SBY 18:57:32 [fifo_bug_full] summary: counterexample trace: fifo_bug_full/engine_0/trace.vcd
+SBY 18:57:32 [fifo_bug_full] summary:   failed assertion fifo_bug_full_formal._witness_.check_assert_fifo_bug_full_formal_sv_50_16 at fifo_bug_full_formal.sv:50.13-50.46 step 4
+SBY 18:57:32 [fifo_bug_full] DONE (FAIL, rc=2)
