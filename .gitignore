@@ -10,3 +10,8 @@ work/
 reports/*
 !reports/.gitkeep
 .DS_Store
+
+# Generated simulation and formal verification artifacts
+build/
+formal/fifo/
+formal/fifo_bug_full/

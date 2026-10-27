@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 10
+
+[engines]
+smtbmc z3
+
+[script]
+read -formal -sv fifo_bug_full.sv fifo_bug_full_formal.sv
+prep -top fifo_bug_full_formal
+
+[files]
+../rtl/bug_variants/fifo_bug_full.sv
+fifo_bug_full_formal.sv
