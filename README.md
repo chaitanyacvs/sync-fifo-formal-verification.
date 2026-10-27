@@ -1,99 +1,223 @@
-# Synchronous FIFO: Formal Verification with RTL Bug Injection
+# Synchronous FIFO — Simulation and Formal Verification
 
-![Language](https://img.shields.io/badge/HDL-SystemVerilog-blue)
-![Simulation](https://img.shields.io/badge/sim-Icarus%20Verilog-green)
-![Formal](https://img.shields.io/badge/formal-Synopsys%20VC%20Formal-orange)
-![Status](https://img.shields.io/badge/formal%20results-pending-lightgrey)
+[![Verilog](https://img.shields.io/badge/HDL-SystemVerilog-blue)](https://www.systemverilog.io/)
+[![Simulation](https://img.shields.io/badge/Simulation-Icarus%20Verilog-orange)](https://github.com/steveicarus/iverilog)
+[![Formal](https://img.shields.io/badge/Formal-Yosys%20%7C%20SymbiYosys-purple)](https://symbiyosys.readthedocs.io/)
 
-A portfolio project that implements a parameterized synchronous FIFO in SystemVerilog, specifies its behavior with SystemVerilog Assertions (SVA), and measures how well those assertions catch deliberately injected RTL bugs.
+A hardware design verification project focused on validating a synchronous First-In, First-Out (FIFO) buffer using SystemVerilog simulation, assertions, and formal verification.
 
-> **Honesty note:** No formal pass or bug-detection result is claimed until it has been run in the target tool and the logs are saved under `reports/`. Anything marked *Pending* below is not yet verified.
+## Overview
 
----
+A synchronous FIFO stores data temporarily and returns it in the same order in which it was written. Read and write operations are controlled by a common clock, while status signals indicate whether the buffer is full or empty.
 
-## Table of Contents
-1. [Project Goals](#project-goals)
-2. [Design Overview](#design-overview)
-3. [Interface](#interface)
-4. [Design Contract](#design-contract)
-5. [Repository Layout](#repository-layout)
-6. [Quick Start](#quick-start)
-7. [Formal Verification Flow](#formal-verification-flow)
-8. [Property Catalog](#property-catalog)
-9. [Bug Injection Workflow](#bug-injection-workflow)
-10. [Bug Detection Matrix](#bug-detection-matrix)
-11. [Evidence Checklist](#evidence-checklist)
-12. [Assumptions and Limitations](#assumptions-and-limitations)
-13. [Roadmap](#roadmap)
-14. [Status](#status)
+This project explores RTL verification through directed simulation and formal property checking. It is designed to detect functional errors in FIFO control logic, pointer updates, occupancy tracking, and read/write behavior.
 
----
+## Objectives
 
-## Project Goals
-- Implement a synthesizable synchronous FIFO in SystemVerilog.
-- Specify reset, occupancy, full/empty, and pointer invariants as assertions.
-- Inject representative RTL bugs and document which properties detect them.
-- Keep portable simulation checks separate from Synopsys VC Formal setup.
-- Save proof logs and counterexamples as reproducible evidence.
+- Verify correct FIFO write and read operations.
+- Check first-in, first-out data ordering.
+- Validate full and empty status behavior.
+- Exercise simultaneous read and write operations.
+- Verify reset behavior and pointer initialization.
+- Use assertions and formal properties to describe FIFO requirements.
+- Run automated simulation and formal verification flows.
+- Preserve logs and verification configuration for reproducibility.
 
-## Design Overview
+## Design Features
 
-```mermaid
-flowchart LR
-    W[wr_en / wr_data] --> CTRL
-    R[rd_en] --> CTRL
-    subgraph FIFO[sync_fifo]
-        CTRL[Pointer + count control] --> MEM[(Memory array, DEPTH x WIDTH)]
-        CTRL --> FLAGS[full / empty from count]
-        MEM --> RDREG[Registered rd_data]
-    end
-    RDREG --> OUT[rd_data]
-    FLAGS --> STAT[full / empty]
+The FIFO implementation and verification environment may include the following features, depending on the actual RTL:
+
+- Synchronous clock and reset.
+- Write enable and read enable controls.
+- Data input and data output interfaces.
+- Read and write pointers.
+- Full and empty status flags.
+- Occupancy or count tracking.
+- Boundary-condition handling.
+- Protection against illegal operations.
+
+## Verification Architecture
+
+```text
+              SystemVerilog Testbench
+                        |
+                 Stimulus Generation
+                        |
+                        v
+                  Synchronous FIFO
+                        |
+             +----------+----------+
+             |                     |
+         Data Output           Status Flags
+             |                     |
+             v                     v
+        Data Checking       Assertions/Checks
+             |                     |
+             +----------+----------+
+                        |
+                        v
+                  PASS / FAIL
 ```
 
-Key design choices:
-- **Count-derived status:** `full` and `empty` are derived from an occupancy counter, which makes the occupancy invariants easy to state and check.
-- **Registered read data:** `rd_data` updates only on an accepted read.
-- **Independent accepts:** a simultaneous read and write are each judged against the pre-edge `full` and `empty` flags.
+Formal verification complements simulation by checking specified properties under the assumptions and bounds of the configured formal engine.
 
-## Interface
+## Verification Scope
 
-| Signal    | Dir | Width            | Description                                   |
-|-----------|-----|------------------|-----------------------------------------------|
-| `clk`     | in  | 1                | Single clock domain                           |
-| `rst_n`   | in  | 1                | Active-low synchronous reset                  |
-| `wr_en`   | in  | 1                | Write request                                 |
-| `wr_data` | in  | `WIDTH`          | Write data                                    |
-| `rd_en`   | in  | 1                | Read request                                  |
-| `rd_data` | out | `WIDTH`          | Registered read data                          |
-| `full`    | out | 1                | FIFO cannot accept writes                     |
-| `empty`   | out | 1                | FIFO has no data to read                      |
-| `count`   | out | `$clog2(DEPTH)+1`| Current occupancy (if exposed for properties) |
+| Test category           | Verification objective                                  |
+| ----------------------- | ------------------------------------------------------- |
+| Reset                   | Check reset initialization and expected status          |
+| Basic write             | Verify data is accepted when writing is permitted       |
+| Basic read              | Verify the oldest stored item is returned               |
+| FIFO ordering           | Confirm data is read in write order                     |
+| Empty condition         | Check behavior when no data is available                |
+| Full condition          | Check behavior when storage capacity is reached         |
+| Simultaneous operations | Examine concurrent read and write requests              |
+| Boundary transitions    | Check empty-to-nonempty and full-to-nonfull transitions |
+| Pointer behavior        | Check pointer progression and wraparound                |
+| Data integrity          | Detect missing, duplicated, or reordered data           |
+| Formal properties       | Check configured safety and control invariants          |
 
-**Parameters**
+The actual tests covered are determined by the implemented testbench and formal properties.
 
-| Parameter | Default | Constraint                                       |
-|-----------|---------|--------------------------------------------------|
-| `WIDTH`   | 8       | >= 1                                             |
-| `DEPTH`   | 8       | >= 2, power of two in this starter version       |
+## Tools and Technologies
 
-> Adjust names and defaults to match `rtl/sync_fifo.sv`.
+| Tool                    | Purpose                               |
+| ----------------------- | ------------------------------------- |
+| Verilog / SystemVerilog | FIFO RTL, testbench, and properties   |
+| Icarus Verilog          | Simulation compilation                |
+| VVP                     | Simulation execution                  |
+| Yosys                   | RTL processing and formal preparation |
+| SymbiYosys (SBY)        | Formal verification orchestration     |
+| `yosys-smtbmc`          | SMT-based formal checking             |
+| Z3                      | SMT solver                            |
+| Bash                    | Verification automation               |
+| Git and GitHub          | Version control and project hosting   |
 
-## Design Contract
-- Single clock; active-low synchronous reset (`rst_n` is sampled on `posedge clk`).
-- `DEPTH` must be at least 2 and is expected to be a power of two in this starter version.
-- A write is accepted when `wr_en && !full`.
-- A read is accepted when `rd_en && !empty`.
-- A simultaneous read and write are independently accepted according to the pre-edge `full` and `empty` flags.
-- Reads while empty and writes while full are ignored.
-- `rd_data` is registered and updates only on an accepted read.
-- Reset clears pointers, count, flags (through the count-derived status), and output data.
+## Repository Structure
 
-## Repository Layout
 ```text
-rtl/
-  sync_fifo.sv              # Clean reference design
-  bug_variants/
-    fifo_bug_full.sv        # Bug: full-flag defect
-    fifo_bug_count.sv       # Bug: occupancy-counter defect
-formal/
+sync-fifo-formal-verification/
+├── rtl/
+│   └── sync_fifo.sv
+├── tb/
+│   └── tb_sync_fifo.sv
+├── formal/
+│   ├── fifo_formal.sv
+│   ├── fifo_properties.sv
+│   └── fifo.sby
+├── scripts/
+│   └── run_sim.sh
+├── results/
+│   ├── simulation.log
+│   └── formal.log
+└── README.md
+```
+
+_This is a representative structure. Retain or rename entries to match the files actually present in the repository._
+
+## Getting Started
+
+### Prerequisites
+
+Install Icarus Verilog, Yosys, SymbiYosys, `yosys-smtbmc`, and Z3 as required by the verification scripts.
+
+Verify tool availability:
+
+```bash
+iverilog -V
+vvp -V
+yosys -V
+sby --version
+z3 --version
+```
+
+### Clone the repository
+
+```bash
+git clone <YOUR_FIFO_REPOSITORY_URL>
+cd sync-fifo-formal-verification
+```
+
+Replace the placeholder with the actual GitHub repository URL.
+
+## Running Simulation
+
+If the repository contains `scripts/run_sim.sh`, execute:
+
+```bash
+chmod +x scripts/run_sim.sh
+./scripts/run_sim.sh
+```
+
+Alternatively, compile the actual FIFO RTL and testbench files directly:
+
+```bash
+iverilog -g2012 -o fifo_sim \
+    <fifo_rtl_files> <fifo_testbench_files>
+
+vvp fifo_sim
+```
+
+Replace the placeholders with the actual source paths. Check the output and logs for mismatches, assertion failures, and pass/fail summaries.
+
+## Running Formal Verification
+
+If the repository contains the configuration file `fifo.sby`, run:
+
+```bash
+sby -f fifo.sby
+```
+
+The formal harness and properties should describe the FIFO's intended behavior, including reset assumptions, legal input conditions, data ordering, pointer constraints, and status consistency.
+
+Review the generated results to determine whether each property passed, failed, or remained unproven. A bounded model-checking result should not be described as an unbounded proof unless the configuration and output establish that result.
+
+## Verification Results
+
+Record the actual results produced by the committed simulation and formal scripts.
+
+Recommended metrics include:
+
+- Number of simulation scenarios executed.
+- Number of checks passed and failed.
+- FIFO ordering and data-integrity results.
+- Full and empty boundary-condition results.
+- Assertion and formal-property outcomes.
+- Formal proof depth and assumptions.
+- Counterexamples and known limitations.
+
+No pass count or formal-proof claim is stated here without the corresponding logs as evidence.
+
+## Common Issues
+
+### Simulation fails to compile
+
+Confirm that all required source files are included and that the selected testbench top module is correct.
+
+### Data ordering mismatch
+
+Inspect the read and write pointers, occupancy tracking, and the expected queue maintained by the testbench.
+
+### Full or empty flag mismatch
+
+Check the FIFO count logic, pointer wraparound, reset behavior, and the defined behavior for simultaneous read/write requests at boundary conditions.
+
+### Formal verification fails
+
+Inspect the counterexample trace, reset assumptions, property definitions, and formal harness. A failure may indicate an RTL bug or a problem in the verification environment.
+
+## Future Improvements
+
+- Add randomized read/write sequences.
+- Add parameterized data width and FIFO depth tests.
+- Strengthen pointer-wraparound and simultaneous-operation coverage.
+- Add assertions for FIFO ordering, occupancy bounds, and status consistency.
+- Integrate simulation and formal checks into CI.
+- Add mutation or fault-injection tests to evaluate verification effectiveness.
+- Document proof assumptions and limitations.
+
+## Conclusion
+
+This project demonstrates a structured approach to synchronous FIFO verification using SystemVerilog simulation and formal methods. It emphasizes data integrity, boundary-condition checking, control-signal correctness, and reproducible verification results.
+
+The final verification status should be based on the actual simulation logs and formal-engine outcomes in the repository.
